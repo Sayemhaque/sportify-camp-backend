@@ -25,10 +25,27 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    
+    //collections
+    const usersCollection = client.db('sportifyDB').collection('users');
+    
 
     app.get('/' , (req,res) => {
         res.send("i am sportigy camp")
     })
+
+    // create a new user
+    app.post('/user', async(req,res) => {
+     const user = req.body;
+     const existingUser = await usersCollection.findOne({email:user.email})
+     if(existingUser){
+       return res.send("user already exist")
+     }
+     const result = await usersCollection.insertOne(user)
+     res.send(result)
+    })
+    
+  
 
 
     await client.db("admin").command({ ping: 1 });
