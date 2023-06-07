@@ -26,7 +26,6 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
 
-
     app.get('/' , (req,res) => {
         res.send("i am sportigy camp")
     })
