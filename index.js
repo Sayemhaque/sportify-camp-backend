@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const PORT = process.env.port || 3000;
 const app = express()
+const jwt = require("jsonwebtoken")
 require('dotenv').config();
 
 
@@ -11,6 +12,20 @@ app.use(express.json())
 app.use(cors());
 
 
+const verifyJWT = (req,res,next) => {
+  const authorization = req.headers.authorization;
+  if(!authorization){
+    return  res.status(401).send({error:true,message:"unauthorized user"})
+  }
+  const token = authorization.split(' ')[1]
+  jwt.verify(token,process.env.JWT_SECRET, (error,decoded) => {
+    if(error){ 
+     return res.status(401).send({error:true,message:"unauthorized user"})
+    }
+    req.decoded = decoded;
+    next()
+  })
+}
 
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -34,6 +49,15 @@ async function run() {
         res.send("i am sportigy camp")
     })
 
+    //jwt token
+    app.post("/jwt", (req,res) => {
+      const {email} = req.body;
+      const token = jwt.sign({email} , process.env.JWT_SECRET,
+        {expiresIn:"4h"}
+        )
+      res.send(token)
+    })
+
     // create a new user
     app.post('/user', async(req,res) => {
      const user = req.body;
@@ -46,8 +70,11 @@ async function run() {
     })
     
     //verify admin role
-    app.get('/user/admin/:email', async (req,res) =>{
-      const email = req.params.email;
+    app.get('/user/admin/:email', verifyJWT, async (req,res) =>{
+      const {email} = req.params.email;
+      if(req.decoded.email !== email) {
+       return  res.send({admin:false})
+      }
       const query ={email:email}
       const user = await usersCollection.findOne(query)
       const result = {admin:user?.role === "admin"}
@@ -55,11 +82,13 @@ async function run() {
     })
 
     //verify instractor role
-    app.get('/user/instructor/:email', async (req,res) =>{
+    app.get('/user/instructor/:email', verifyJWT, async (req,res) =>{
       const email = req.params.email;
+      if(req.decoded.email !== email) {
+       return res.send({instructor:false})
+      }
       const query ={email:email}
       const user = await usersCollection.findOne(query)
-      console.log(user)
       const result = {instructor:user?.role === "instructor"}
       res.send(result)
     })
