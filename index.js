@@ -43,13 +43,8 @@ async function run() {
     
     //collections
     const usersCollection = client.db('sportifyDB').collection('users');
+    const classCollection = client.db('sportifyDB').collection('classes');
     
-
-    app.get('/' , (req,res) => {
-        res.send("i am sportigy camp")
-    })
-
-    //jwt token
     app.post("/jwt", (req,res) => {
       const {email} = req.body;
       const token = jwt.sign({email} , process.env.JWT_SECRET,
@@ -57,6 +52,26 @@ async function run() {
         )
       res.send(token)
     })
+
+  const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email
+      const query = { email: email }
+      const user = await usersCollection.findOne(query)
+      if (user.role !== 'admin') {
+        return res.status(403).send({ error: true, message: "forbiden" })
+      }
+      next()
+    }
+    
+    app.get('/' , (req,res) => {
+        res.send("i am sportigy camp")
+    })
+
+
+   
+
+    //jwt token
+    
 
     // create a new user
     app.post('/user', async(req,res) => {
@@ -71,28 +86,43 @@ async function run() {
     
     //verify admin role
     app.get('/user/admin/:email', verifyJWT, async (req,res) =>{
-      const {email} = req.params.email;
+      const email = req.params.email;
+      console.log(req.decoded.email,email)
       if(req.decoded.email !== email) {
        return  res.send({admin:false})
       }
       const query ={email:email}
       const user = await usersCollection.findOne(query)
       const result = {admin:user?.role === "admin"}
+      console.log(result)
       res.send(result)
     })
+
+
+    
 
     //verify instractor role
     app.get('/user/instructor/:email', verifyJWT, async (req,res) =>{
       const email = req.params.email;
+       console.log(req.decoded.email,email)
       if(req.decoded.email !== email) {
        return res.send({instructor:false})
       }
       const query ={email:email}
       const user = await usersCollection.findOne(query)
       const result = {instructor:user?.role === "instructor"}
+        console.log(result)
       res.send(result)
     })
-  
+
+
+ 
+    //add a class
+    app.post("/add/class" , verifyJWT,  async (req,res) => {
+       const data = req.body;
+       const result = await classCollection.insertOne(data)
+       res.send(result)
+    })
   
 
 
