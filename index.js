@@ -44,6 +44,7 @@ async function run() {
     //collections
     const usersCollection = client.db('sportifyDB').collection('users');
     const classCollection = client.db('sportifyDB').collection('classes');
+    const selectedCollection = client.db('sportifyDB').collection('selected');
 
     //jwt token
     app.post("/jwt", (req, res) => {
@@ -79,11 +80,6 @@ async function run() {
     app.get('/', (req, res) => {
       res.send("i am sportigy camp")
     })
-
-
-
-
-
 
 
     // create a new user
@@ -124,7 +120,7 @@ async function run() {
     })
     
 
-    app.patch('/status/approved:id', async (req, res) => {
+    app.patch('/status/approve/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
       const updatedDoc = {
@@ -136,11 +132,38 @@ async function run() {
       console.log(result)
     })
 
+    app.patch('/status/deny/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const updatedDoc = {
+        $set: {
+          status: "denied"
+        }
+      }
+      const result = await classCollection.updateOne(filter, updatedDoc)
+      console.log(result)
+    })
+
     // get all the user as admin
     app.get('/users', async (req, res) => {
       const result = await usersCollection.find().toArray()
       res.send(result)
     })
+
+  // get all the instructor
+    app.get('/instructors', async (req, res) => {
+      const query = {role : "instructor"}
+      const result = await usersCollection.find(query).toArray()
+      res.send(result)
+    })
+
+  // get all the approved classes
+    app.get('/approved/classes', async (req, res) => {
+      const query = {status : "approved"}
+      const result = await classCollection.find(query).toArray()
+      res.send(result)
+    })
+
 
 
     //verify admin role
@@ -171,7 +194,7 @@ async function run() {
         res.send(result)
       })
 
-
+  
 
 
     //verify instractor role
@@ -209,6 +232,14 @@ async function run() {
       res.send(result)
 
     })
+
+    //post class select by student
+    app.post('/select', async (req,res) =>{
+      const data = req.body;
+      const result = await selectedCollection.insertOne(data)
+      res.send(result)
+    })
+
 
 
     await client.db("admin").command({ ping: 1 });
