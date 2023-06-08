@@ -239,7 +239,14 @@ async function run() {
       const result = await selectedCollection.insertOne(data)
       res.send(result)
     })
-
+ 
+    //get classes for specifi user
+    app.get('/selected',  async (req,res) =>{
+      const email = req.query.email;
+      const query = {email : email}
+      const result = await selectedCollection.find(query).toArray()
+      res.send(result)
+    })
 
 
     await client.db("admin").command({ ping: 1 });
