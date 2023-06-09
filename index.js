@@ -4,6 +4,8 @@ const PORT = process.env.port || 3000;
 const app = express()
 const jwt = require("jsonwebtoken")
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET)
+
 
 
 
@@ -45,6 +47,7 @@ async function run() {
     const usersCollection = client.db('sportifyDB').collection('users');
     const classCollection = client.db('sportifyDB').collection('classes');
     const selectedCollection = client.db('sportifyDB').collection('selected');
+    const paymentCollection = client.db('sportifyDB').collection('payment');
 
     //jwt token
     app.post("/jwt", (req, res) => {
@@ -233,19 +236,65 @@ async function run() {
 
     })
 
-    //post class select by student
-    app.post('/select', async (req,res) =>{
-      const data = req.body;
-      const result = await selectedCollection.insertOne(data)
-      res.send(result)
-    })
- 
-    //get classes for specifi user
+
+    
+    //get classes for specific user
     app.get('/selected',  async (req,res) =>{
       const email = req.query.email;
       const query = {email : email}
       const result = await selectedCollection.find(query).toArray()
       res.send(result)
+    })
+
+
+    //post class select by student
+    app.post('/select', async (req, res) => {
+      const data = req.body;
+      const existingSelection = await selectedCollection.findOne(data);
+      if (existingSelection) {
+        return res.status(400).json({ error: 'Class already selected' });
+      }
+      const result = await selectedCollection.insertOne(data);
+      res.send(result);
+    });
+    
+
+    //payment intedn
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price} = req.body;
+      const amount = price * 100;
+      console.log(amount)
+      // Create a PaymentIntent with the order amount and currency
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types:['card'],
+      });
+      if(!paymentIntent){
+        return res.send({error:true})
+      }
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    })
+
+    //payment 
+    app.post('/payments' , verifyJWT, async (req,res) => {
+      const paymentData = req.body;
+     console.log(paymentData)
+      const query = {_id: new ObjectId(paymentData.selectedClass._id)}
+      const deleteResult = await selectedCollection.deleteOne(query)
+      const InserResult = await paymentCollection.insertOne(paymentData);
+      res.send({InserResult,deleteResult})
+    })
+
+    //get all payment classes
+    app.get('/enrolled',  async (req,res) =>{
+      const email = req.query.email;
+      const query = {email:email}
+      const paymentClass = await paymentCollection.find(query).toArray()
+      // const result = await selectedCollection.find(query).toArray()
+      res.send(paymentClass)
     })
 
 
