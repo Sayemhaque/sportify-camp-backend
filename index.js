@@ -51,6 +51,7 @@ async function run() {
     const classCollection = client.db('sportifyDB').collection('classes');
     const selectedCollection = client.db('sportifyDB').collection('selected');
     const paymentCollection = client.db('sportifyDB').collection('payment');
+    const sliderCollection = client.db('sportifyDB').collection('slider');
 
     //jwt token
     app.post("/jwt", (req, res) => {
@@ -82,7 +83,12 @@ async function run() {
       next()
     }
 
-
+     
+     // get slider data
+     app.get('/slider', async (req, res) => {
+      const result = await sliderCollection.find().toArray()
+      res.send(result)
+    })
 
     // create a new user
     app.post('/user', async (req, res) => {
