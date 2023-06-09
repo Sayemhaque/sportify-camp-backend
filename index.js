@@ -37,7 +37,10 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
+   useNewUrlParser : true,
+    useUnifiedTopology:true,
+    maxPoolSize:10,
 });
 
 async function run() {
@@ -79,10 +82,6 @@ async function run() {
       next()
     }
 
-
-    app.get('/', (req, res) => {
-      res.send("i am sportigy camp")
-    })
 
 
     // create a new user
@@ -331,15 +330,9 @@ async function run() {
 }
 run().catch(console.dir);
 
-
-
-
-
-
-
-
-
-
+app.get('/', (req, res) => {
+  res.send("i am sportigy camp")
+})
 
 app.listen(PORT, () => {
   console.log('app is runnig')
