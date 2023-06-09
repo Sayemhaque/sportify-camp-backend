@@ -10,8 +10,14 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET)
 
 
 //midddlewares
+const corsOptions = {
+  origin: '*',
+  credentials: true,
+  optionSuccessStatus: 200,
+}
+app.use(cors(corsOptions))
 app.use(express.json())
-app.use(cors());
+
 
 
 const verifyJWT = (req, res, next) => {
