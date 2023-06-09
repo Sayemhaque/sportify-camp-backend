@@ -183,14 +183,20 @@ async function run() {
       res.send(result)
     })
 
-
+    // get all the classes
     app.get('/allclasses', verifyJWT, verifyAdmin, async (req, res) => {
       const result = await classCollection.find().toArray()
       res.send(result)
     })
 
+    // get popular classes based on enrollment
+    app.get('/popular/classes' , async (req,res) => {
+      const result = await classCollection.find().sort({totalEnroll: -1}).toArray()
+      res.send(result)
+    })
 
-    app.get('/instructor/allclasse', async (req, res) => {
+    // get all classes added by instructor
+    app.get('/instructor/allclasse', verifyJWT,verifyInstructor, async (req, res) => {
       const email = req.query.email;
       const query = { email: email }
       const result = await classCollection.find(query).toArray()
@@ -286,7 +292,7 @@ async function run() {
       //delete class form selctedcollection
       const deleteResult = await selectedCollection.deleteOne(query)
       const InserResult = await paymentCollection.insertOne(paymentData);
-      res.send({ InserResult, deleteResult})
+      res.send({ InserResult, deleteResult })
     })
 
     // update seats after enrollment
@@ -298,6 +304,7 @@ async function run() {
       const updatedDoc = {
         $set: {
           seats: updatedSeats,
+          totalEnroll:+1
         },
       }
       const result = await classCollection.updateOne(seatQuery, updatedDoc)
