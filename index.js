@@ -121,7 +121,7 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updatedDoc)
       console.log(result)
     })
-    
+
 
     app.patch('/status/approve/:id', async (req, res) => {
       const id = req.params.id;
@@ -153,16 +153,16 @@ async function run() {
       res.send(result)
     })
 
-  // get all the instructor
+    // get all the instructor
     app.get('/instructors', async (req, res) => {
-      const query = {role : "instructor"}
+      const query = { role: "instructor" }
       const result = await usersCollection.find(query).toArray()
       res.send(result)
     })
 
-  // get all the approved classes
+    // get all the approved classes
     app.get('/approved/classes', async (req, res) => {
-      const query = {status : "approved"}
+      const query = { status: "approved" }
       const result = await classCollection.find(query).toArray()
       res.send(result)
     })
@@ -184,20 +184,20 @@ async function run() {
     })
 
 
-        app.get('/allclasses', verifyJWT, verifyAdmin, async (req, res) => {
-          const result = await classCollection.find().toArray()
-          res.send(result)
-        })
+    app.get('/allclasses', verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await classCollection.find().toArray()
+      res.send(result)
+    })
 
 
     app.get('/instructor/allclasse', async (req, res) => {
-        const email = req.query.email;
-        const query = {email:email}
-        const result = await classCollection.find(query).toArray()
-        res.send(result)
-      })
+      const email = req.query.email;
+      const query = { email: email }
+      const result = await classCollection.find(query).toArray()
+      res.send(result)
+    })
 
-  
+
 
 
     //verify instractor role
@@ -237,11 +237,11 @@ async function run() {
     })
 
 
-    
+
     //get classes for specific user
-    app.get('/selected',  async (req,res) =>{
+    app.get('/selected', async (req, res) => {
       const email = req.query.email;
-      const query = {email : email}
+      const query = { email: email }
       const result = await selectedCollection.find(query).toArray()
       res.send(result)
     })
@@ -257,21 +257,21 @@ async function run() {
       const result = await selectedCollection.insertOne(data);
       res.send(result);
     });
-    
+
 
     //payment intedn
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
-      const { price} = req.body;
+      const { price } = req.body;
       const amount = price * 100;
       console.log(amount)
       // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
-        payment_method_types:['card'],
+        payment_method_types: ['card'],
       });
-      if(!paymentIntent){
-        return res.send({error:true})
+      if (!paymentIntent) {
+        return res.send({ error: true })
       }
       res.send({
         clientSecret: paymentIntent.client_secret,
@@ -279,19 +279,36 @@ async function run() {
     })
 
     //payment 
-    app.post('/payments' , verifyJWT, async (req,res) => {
+    app.post('/payments', verifyJWT, async (req, res) => {
       const paymentData = req.body;
-     console.log(paymentData)
-      const query = {_id: new ObjectId(paymentData.selectedClass._id)}
+      console.log(paymentData)
+      const query = { _id: new ObjectId(paymentData.selectedClass._id) }
+      //delete class form selctedcollection
       const deleteResult = await selectedCollection.deleteOne(query)
       const InserResult = await paymentCollection.insertOne(paymentData);
-      res.send({InserResult,deleteResult})
+      res.send({ InserResult, deleteResult})
+    })
+
+    // update seats after enrollment
+    app.patch("/update/seats/:id", async (req, res) => {
+      const id = req.params.id
+      const seatQuery = { _id: new ObjectId(id) };
+      const classDocument = await classCollection.findOne(seatQuery);
+      const updatedSeats = classDocument.seats - 1;
+      const updatedDoc = {
+        $set: {
+          seats: updatedSeats,
+        },
+      }
+      const result = await classCollection.updateOne(seatQuery, updatedDoc)
+      res.send(result)
+
     })
 
     //get all payment classes
-    app.get('/enrolled',  async (req,res) =>{
+    app.get('/enrolled', async (req, res) => {
       const email = req.query.email;
-      const query = {email:email}
+      const query = { email: email }
       const paymentClass = await paymentCollection.find(query).toArray()
       // const result = await selectedCollection.find(query).toArray()
       res.send(paymentClass)
