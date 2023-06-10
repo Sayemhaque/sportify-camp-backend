@@ -10,13 +10,10 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET)
 
 
 //midddlewares
-const corsOptions = {
-  origin: '*',
-  credentials: true,
-  optionSuccessStatus: 200,
-}
-app.use(cors(corsOptions))
+
+
 app.use(express.json())
+app.use(cors())
 
 
 
@@ -108,7 +105,7 @@ async function run() {
     })
 
     // update student to admin
-    app.patch('/admin/:id', async (req, res) => {
+    app.put('/admin/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
       const updatedDoc = {
@@ -117,11 +114,11 @@ async function run() {
         }
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
-      console.log(res)
+      res.send(result)
     })
 
     //update student to instructor
-    app.patch('/instructor/:id', async (req, res) => {
+    app.put('/instructor/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
       const updatedDoc = {
@@ -130,7 +127,8 @@ async function run() {
         }
       }
       const result = await usersCollection.updateOne(filter, updatedDoc)
-      console.log(result)
+      res.send(result)
+      console.log(result);
     })
 
 
@@ -143,7 +141,7 @@ async function run() {
         }
       }
       const result = await classCollection.updateOne(filter, updatedDoc)
-      console.log(result)
+      res.send(result)
     })
 
     app.patch('/status/deny/:id', async (req, res) => {
@@ -155,7 +153,7 @@ async function run() {
         }
       }
       const result = await classCollection.updateOne(filter, updatedDoc)
-      console.log(result)
+      res.send(result)
     })
 
     // get all the user as admin
@@ -260,6 +258,15 @@ async function run() {
       const email = req.query.email;
       const query = { email: email }
       const result = await selectedCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
+    // delete a selected class
+    app.delete('/selected/:id', verifyJWT ,async(req,res) => {
+       const id = req.params.id
+      const query = {_id: new ObjectId(id)};
+      const result = await selectedCollection.deleteOne(query);
       res.send(result)
     })
 
