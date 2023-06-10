@@ -175,7 +175,7 @@ async function run() {
       const result = await classCollection.find(query).toArray()
       res.send(result)
     })
-
+    
 
 
     //verify admin role
@@ -197,10 +197,20 @@ async function run() {
       const result = await classCollection.find().toArray()
       res.send(result)
     })
+    
+    // get a single class
+    app.get('/class/:id', async (req,res) => {
+      const id = req.params.id
+      const query = {_id: new ObjectId(id)}
+      const result = await classCollection.findOne(query)
+      res.send(result)
+    })
+
+     
 
     // get popular classes based on enrollment
     app.get('/popular/classes' , async (req,res) => {
-      const result = await classCollection.find().sort({totalEnroll: -1}).toArray()
+      const result = await classCollection.find().sort({totalEnroll: -1}).limit(6).toArray()
       res.send(result)
     })
 
