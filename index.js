@@ -55,6 +55,7 @@ async function run() {
     const selectedCollection = client.db('sportifyDB').collection('selected');
     const paymentCollection = client.db('sportifyDB').collection('payment');
     const sliderCollection = client.db('sportifyDB').collection('slider');
+    const reviewCollection = client.db('sportifyDB').collection('reviews');
 
     //jwt token
     app.post("/jwt", (req, res) => {
@@ -207,6 +208,19 @@ async function run() {
     })
 
      
+    // feedback
+    app.patch('/feedback/:id', async (req,res) => {
+      const id = req.params.id;
+      const msg = req.body;
+      const query = {_id: new ObjectId(id)}
+       const updatedDoc = {
+        $set:{
+          feedback:msg.feedback
+        }
+       }
+       const result = await classCollection.updateOne(query,updatedDoc)
+       res.send(result)
+    }) 
 
     // get popular classes based on enrollment
     app.get('/popular/classes' , async (req,res) => {
@@ -348,6 +362,13 @@ async function run() {
       // const result = await selectedCollection.find(query).toArray()
       res.send(paymentClass)
     })
+    
+    //get all payment classes
+    app.get('/reviews', async (req, res) => {
+      const result = await reviewCollection.find().toArray()
+      res.send(result)
+    })
+    
 
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
