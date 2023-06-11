@@ -33,6 +33,7 @@ const verifyJWT = (req, res, next) => {
 }
 
 
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@simple-crud-2023.h8uagaz.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -66,7 +67,8 @@ async function run() {
       res.send(token)
     })
 
-    const verifyAdmin = async (req, res, next) => {
+   
+ const verifyAdmin = async (req, res, next) => {
       const email = req.decoded.email
       const query = { email: email }
       const user = await usersCollection.findOne(query)
@@ -81,11 +83,13 @@ async function run() {
       const email = req.decoded.email
       const query = { email: email }
       const user = await usersCollection.findOne(query)
+      console.log(user.role)
       if (user.role !== 'instructor') {
         return res.status(403).send({ error: true, message: "forbiden" })
       }
       next()
     }
+    
 
      
      // get slider data
@@ -256,7 +260,7 @@ async function run() {
 
 
     //add a class
-    app.post("/add/class", verifyJWT, verifyInstructor, async (req, res) => {
+    app.post("/add/class", verifyJWT, verifyInstructor,  async (req, res) => {
       const data = req.body;
       const result = await classCollection.insertOne(data)
       res.send(result)
